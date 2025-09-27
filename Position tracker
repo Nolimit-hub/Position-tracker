@@ -1,0 +1,134 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+local function createGUI()
+    -- Avoid duplicate GUI
+    for _, gui in pairs(PlayerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") and gui.Name == "" then
+            gui:Destroy()
+        end
+    end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = PlayerGui
+
+    -- Main Frame
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, 280, 0, 160)
+    Frame.Position = UDim2.new(0.5, -140, 0.5, -80)
+    Frame.BackgroundColor3 = Color3.fromRGB(120, 50, 200)
+    Frame.BackgroundTransparency = 0.1
+    Frame.Active = true
+    Frame.Draggable = true
+    Frame.ZIndex = 2
+    Frame.ClipsDescendants = true
+    Frame.Parent = ScreenGui
+
+    local UICorner = Instance.new("UICorner", Frame)
+    UICorner.CornerRadius = UDim.new(0, 12)
+
+    -- Helper function for buttons
+    local function createButton(posY, text, color)
+        local btn = Instance.new("TextButton", Frame)
+        btn.Size = UDim2.new(0, 260, 0, 30)
+        btn.Position = UDim2.new(0, 10, 0, posY)
+        btn.Text = text
+        btn.BackgroundColor3 = color
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.ZIndex = 3
+        btn.AutoButtonColor = true
+        local corner = Instance.new("UICorner", btn)
+        corner.CornerRadius = UDim.new(0, 8)
+        return btn
+    end
+
+    local StartButton = createButton(10, "Start: Click to get position", Color3.fromRGB(170,100,250))
+    local CopyButton = createButton(90, "Copy Location", Color3.fromRGB(100,40,200))
+    local CleanButton = createButton(130, "Clean Location", Color3.fromRGB(200,50,150))
+
+    local TextBox = Instance.new("TextBox", Frame)
+    TextBox.Size = UDim2.new(0, 260, 0, 30)
+    TextBox.Position = UDim2.new(0, 10, 0, 50)
+    TextBox.Text = "Position will appear here"
+    TextBox.ClearTextOnFocus = false
+    TextBox.BackgroundColor3 = Color3.fromRGB(90,40,170)
+    TextBox.TextColor3 = Color3.new(1,1,1)
+    TextBox.ZIndex = 3
+    local UICornerBox = Instance.new("UICorner", TextBox)
+    UICornerBox.CornerRadius = UDim.new(0, 8)
+
+    -- Close Button
+    local CloseButton = Instance.new("TextButton", Frame)
+    CloseButton.Size = UDim2.new(0, 25, 0, 25)
+    CloseButton.Position = UDim2.new(1, -30, 0, 5)
+    CloseButton.Text = "X"
+    CloseButton.BackgroundColor3 = Color3.fromRGB(200,0,200)
+    CloseButton.TextColor3 = Color3.new(1,1,1)
+    CloseButton.ZIndex = 3
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.TextSize = 18
+    local UICornerClose = Instance.new("UICorner", CloseButton)
+    UICornerClose.CornerRadius = UDim.new(0, 12)
+
+    -- Mini button (small circle, no text)
+    local MiniButton = Instance.new("TextButton", ScreenGui)
+    MiniButton.Size = UDim2.new(0, 30, 0, 30) -- smaller
+    MiniButton.Position = UDim2.new(0, 10, 0.5, -15)
+    MiniButton.BackgroundColor3 = Color3.fromRGB(150,50,200)
+    MiniButton.Text = "" -- no text
+    MiniButton.Visible = false
+    MiniButton.ZIndex = 4
+    local UICornerMini = Instance.new("UICorner", MiniButton)
+    UICornerMini.CornerRadius = UDim.new(1,0) -- fully circular
+
+    -- State
+    local isSelecting = false
+    local currentPosition = nil
+
+    StartButton.MouseButton1Click:Connect(function()
+        isSelecting = true
+        StartButton.Text = "Click in the world..."
+    end)
+
+    mouse.Button1Down:Connect(function()
+        if isSelecting then
+            local pos = mouse.Hit.p
+            currentPosition = Vector3.new(
+                math.floor(pos.X*100)/100, 
+                math.floor(pos.Y*100)/100, 
+                math.floor(pos.Z*100)/100
+            )
+            TextBox.Text = "Vector3.new("..currentPosition.X..", "..currentPosition.Y..", "..currentPosition.Z..")"
+            StartButton.Text = "Start: Click to get position"
+            isSelecting = false
+        end
+    end)
+
+    CopyButton.MouseButton1Click:Connect(function()
+        if currentPosition then
+            setclipboard(TextBox.Text)
+        end
+    end)
+
+    CleanButton.MouseButton1Click:Connect(function()
+        TextBox.Text = ""
+        currentPosition = nil
+    end)
+
+    CloseButton.MouseButton1Click:Connect(function()
+        Frame.Visible = false
+        MiniButton.Visible = true
+    end)
+
+    MiniButton.MouseButton1Click:Connect(function()
+        Frame.Visible = true
+        MiniButton.Visible = false
+    end)
+
+    return ScreenGui
+end
+
+createGUI()
